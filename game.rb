@@ -1,11 +1,10 @@
 class Game
   attr_accessor :player, :dealer, :deck, :round_bank
-  
+
   def initialize
     @dealer = Dealer.new
     @deck = Deck.new
     @round_bank = 0
-    @busted = false
   end
 
   def start_game
@@ -14,6 +13,7 @@ class Game
     @player = Player.new(player_name)
 
     loop do
+      check_balance
       deal_cards(player)
       deal_cards(dealer)
 
@@ -28,10 +28,10 @@ class Game
       player.show_hand
       print '| '
       dealer.show_hidden
-      puts ' ', @player.points
+      puts ' '
 
       make_choice
-      winner unless @busted
+      winner
       break unless another_round?
 
       prepare_new_round
@@ -46,7 +46,6 @@ class Game
     when 2
       player.hand << deck.cards.pop
       player.count_points
-      end_round_busted if player.busted? 
     when 3
       'У вас 3 карты, больше добавить нельзя. Открываемся?'
     end
@@ -70,11 +69,13 @@ class Game
 
     case choice
     when 1
+      @skip = true
       dealer_turn
     when 2
       deal_cards(player)
       player.show_hand
-      break if @busted
+      return if player.busted?
+
       dealer_turn
     when 3
       open_cards
@@ -86,14 +87,35 @@ class Game
 
     if points >= 17
       puts 'Дилер сделал ход, ваша очередь'
-      #player_turn
-      open_cards
+      player_turn if @skip
     elsif points < 17
       puts 'Дилер берет карту'
       deal_cards(dealer)
-      #puts "У дилера перебор #{dealer.points}, вы победили!" if dealer.busted?
+      return if dealer.busted?
+
+      player_turn if @skip
       open_cards
-      break if @busted
+    end
+  end
+
+  def player_turn
+    puts ' '
+    puts 'Ваше действие: '
+    puts '1. Взять карту'
+    puts '2. Открыться'
+    print '>'
+
+    choice = gets.to_i
+
+    case choice
+    when 1
+      deal_cards(player)
+      #player.show_hand
+      return if player.busted?
+
+      open_cards
+    when 2
+      open_cards
     end
   end
 
@@ -105,14 +127,21 @@ class Game
     print " У дилера #{dealer.points}"
   end
 
-  def end_round_busted
-    @busted = true
-    puts 'Перебор!'
-
-  end
-
   def winner
     puts ' '
+
+    if player.busted?
+      @dealer.bank += round_bank
+      puts 'У вас перебор. Дилер победил'
+      puts "Ваш баланс: #{player.bank}"
+      return
+    elsif dealer.busted?
+      @player.bank += round_bank
+      puts 'У дилера перебор. Вы победили'
+      puts "Ваш баланс: #{player.bank}"
+      return
+    end
+
     if player.points > dealer.points
       puts 'Вы победили. Забирайте весь банк'
       @player.bank += round_bank
@@ -150,5 +179,15 @@ class Game
     @player.hand = []
     @dealer.hand = []
     @deck = Deck.new
+  end
+
+  def check_balance
+    if @player.bank <= 0
+      puts 'У вас кончились деньги. Игра закончена'
+      exit
+    elsif @dealer.bank <= 0
+      puts 'У дилера кончились деньги. Игра закончена'
+      exit
+    end
   end
 end
