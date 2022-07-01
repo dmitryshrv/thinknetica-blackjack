@@ -26,6 +26,10 @@ class Player
     @hand.each { |card| @points += card.value }
   end
 
+  def bet
+    BET
+  end
+
   def busted?
     @points > 21
   end
