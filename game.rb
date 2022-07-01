@@ -5,6 +5,7 @@ class Game
     @dealer = Dealer.new
     @deck = Deck.new
     @round_bank = 0
+    @skip = false
   end
 
   def start_game
@@ -58,6 +59,7 @@ class Game
   end
 
   def make_choice
+    @skip = false
     puts ' '
     puts 'Ваше действие: '
     puts '1. Пропустить ход'
@@ -73,7 +75,6 @@ class Game
       dealer_turn
     when 2
       deal_cards(player)
-      player.show_hand
       return if player.busted?
 
       dealer_turn
@@ -86,7 +87,7 @@ class Game
     points = dealer.points
 
     if points >= 17
-      puts 'Дилер сделал ход, ваша очередь'
+      puts 'Дилер сделал ход'
       player_turn if @skip
     elsif points < 17
       puts 'Дилер берет карту'
@@ -110,7 +111,6 @@ class Game
     case choice
     when 1
       deal_cards(player)
-      #player.show_hand
       return if player.busted?
 
       open_cards
@@ -131,11 +131,15 @@ class Game
     puts ' '
 
     if player.busted?
+      player.show_hand
+      puts ' '
       @dealer.bank += round_bank
       puts 'У вас перебор. Дилер победил'
       puts "Ваш баланс: #{player.bank}"
       return
     elsif dealer.busted?
+      dealer.show_hand
+      puts ' '
       @player.bank += round_bank
       puts 'У дилера перебор. Вы победили'
       puts "Ваш баланс: #{player.bank}"

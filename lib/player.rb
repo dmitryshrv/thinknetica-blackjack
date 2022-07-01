@@ -23,7 +23,17 @@ class Player
 
   def count_points
     @points = 0
-    @hand.each { |card| @points += card.value }
+    @ace_sum = 0
+    @ace_counts = 0
+
+    @hand.each do |card|
+      if ace?(card)
+        @ace_counts += 1
+        @ace_sum += 11
+      end
+      @points += card.value
+    end
+    @points = @points - @ace_sum + @ace_counts if busted?
   end
 
   def bet
@@ -32,5 +42,9 @@ class Player
 
   def busted?
     @points > 21
+  end
+
+  def ace?(card)
+    card.rank == 'a'
   end
 end
